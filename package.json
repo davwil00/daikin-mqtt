@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "Fetches data from heat punp sensor and publishes to MQTT",
   "main": "main.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "David Williams",
   "license": "ISC",
   "dependencies": {
     "async-mqtt": "^2.6.3",
     "daikin-controller-cloud": "^1.0.4",
     "dotenv": "^16.0.3",
+    "mongodb": "^5.0.1",
     "mqtt": "^4.3.7"
   }
 }

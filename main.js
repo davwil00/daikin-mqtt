@@ -3,6 +3,7 @@ const DaikinCloud = require('daikin-controller-cloud');
 const path = require('path');
 require('dotenv').config()
 const mqtt = require('async-mqtt')
+const { MongoClient } = require("mongodb");
 
 async function initDaikinCloud() {
     /**
@@ -55,7 +56,28 @@ function initMqtt() {
     })
 }
 
-async function getData(daikinCloud, mqtt) {
+async function saveToDb(db, outsideTemp, tankTemp) {
+    await db.insertMany([
+        {
+            metadata: {
+                sensorId: 'outsideTemp',
+                type: 'temperature'
+            },
+            timestamp: new Date(),
+            temp: outsideTemp
+        },
+        {
+            metadata: {
+                sensorId: 'tankTemperature',
+                type: 'temperature'
+            },
+            timestamp: new Date(),
+            temp: tankTemp
+        },
+        ])
+}
+
+async function getData(daikinCloud, mqtt, db) {
     console.log('Fetching data')
     const devices = await daikinCloud.getCloudDevices();
 
@@ -66,15 +88,27 @@ async function getData(daikinCloud, mqtt) {
         console.log('Tank temperature:', tankTemp)
         await mqtt.publish('heatpump/outsidetemp', `${outsideTemp}`)
         await mqtt.publish('heatpump/tanktemp', `${tankTemp}`)
+        await saveToDb(db, outsideTemp, tankTemp)
     } else {
         console.error('No devices found')
     }
 }
 
+function connectToDb() {
+    const uri = `mongodb+srv://mqtt:${process.env.MONGO_PASSWORD}@bingo.oga25.mongodb.net?retryWrites=true&w=majority`
+    return new MongoClient(uri);
+}
+
+const dbClient = connectToDb()
 Promise.all([initDaikinCloud(), initMqtt()])
     .then(async ([daikinCloud, mqtt]) => {
+        const database = dbClient.db('mqtt');
+        const mqttDb = database.collection('mqtt');
+
         while (true) {
-            await getData(daikinCloud, mqtt)
+            await getData(daikinCloud, mqtt, mqttDb)
             await new Promise(r => setTimeout(r, 120000));
         }
     })
+    .finally(() => dbClient.close())
+
