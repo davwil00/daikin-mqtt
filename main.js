@@ -83,8 +83,8 @@ async function getData(daikinCloud, mqtt, dbClient) {
         const tankTemp = devices[0].managementPoints.domesticHotWaterTank.sensoryData['/tankTemperature'].value
         console.log('Outside temperature:', outsideTemp)
         console.log('Tank temperature:', tankTemp)
-        await mqtt.publish('heatpump/outsidetemp', `${outsideTemp}`)
-        await mqtt.publish('heatpump/tanktemp', `${tankTemp}`)
+        await mqtt.publish('heatpump/outsidetemp', `${outsideTemp}`, {retain: true})
+        await mqtt.publish('heatpump/tanktemp', `${tankTemp}`, {retain: true})
         await saveToDb(dbClient, outsideTemp, tankTemp)
     } else {
         console.error('No devices found')
@@ -97,6 +97,8 @@ async function connectToDb() {
     return client
 }
 
+
+fs.rmSync('tokenset.json', {force: true})
 Promise.all([connectToDb(), initDaikinCloud(), initMqtt()])
     .then(async ([dbClient, daikinCloud, mqtt]) => {
 
