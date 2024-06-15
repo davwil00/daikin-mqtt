@@ -1,4 +1,4 @@
 /node_modules
 /.fleet
 .env
-tokenset.json
+token.json
