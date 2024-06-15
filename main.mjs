@@ -2,6 +2,7 @@ import mqtt from "async-mqtt"
 import pkg from "pg"
 import {readFileSync, existsSync} from "fs"
 import {writeFile} from "fs/promises"
+
 const {Client} = pkg
 
 function initMqtt() {
@@ -38,23 +39,30 @@ async function getAccessToken() {
     if (!existsSync('token.json')) {
         console.error(`No token found, please log in to get a token and try again: https://idp.onecta.daikineurope.com/v1/oidc/authorize?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URL}&scope=openid%20onecta:basic.integration`)
     }
-    const accessToken = JSON.parse(readFileSync('token.json', {encoding: 'utf8'})).access_token
-    const tokenData = parseJwt(accessToken)
+    const tokenResponse = JSON.parse(readFileSync('token.json', {encoding: 'utf8'}))
+    const tokenData = parseJwt(tokenResponse.access_token)
     const expiry = new Date(tokenData.exp * 1000)
     if (expiry < new Date()) {
         // fetch new token
-        const response = await fetch(`https://idp.onecta.daikineurope.com/v1/oidc/token?grant_type=authorization_code&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${tokenData.refresh_token}&redirect_uri=https://oidc.davwil00.co.uk`, {
+        const response = await fetch(`https://idp.onecta.daikineurope.com/v1/oidc/token?grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&refresh_token=${tokenResponse.refresh_token}`, {
             method: 'post'
-        }).then(response => response.json())
+        })
+        const responseJson = await response.json()
+        if (response.status === 200) {
+            await writeFile('token.json', JSON.stringify(response))
+        } else {
+            console.error(`${response.status}: ${responseJson.error} ${responseJson.error_description}`)
+            throw new Error()
+        }
+
         // update token.json
-        await writeFile('token.json', JSON.stringify(response))
         return response.access_token
     } else {
-        return accessToken
+        return tokenResponse.access_token
     }
 }
 
-async function getData(daikinCloud, mqtt, dbClient) {
+async function getData(mqtt, dbClient) {
     console.log('Fetching data')
     const token = await getAccessToken()
     const devices = await fetch('https://api.onecta.daikineurope.com/v1/gateway-devices',
@@ -79,11 +87,12 @@ async function getData(daikinCloud, mqtt, dbClient) {
     }
 }
 
+
 Promise.all([connectToDb(), initMqtt()])
-    .then(async ([dbClient, daikinCloud, mqtt]) => {
+    .then(async ([dbClient, mqtt]) => {
 
         while (true) {
-            await getData(daikinCloud, mqtt, dbClient)
+            await getData(mqtt, dbClient)
             await new Promise(r => setTimeout(r, 600000)) // 10 mins
         }
     })
