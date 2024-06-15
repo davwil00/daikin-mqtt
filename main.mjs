@@ -1,6 +1,7 @@
 import mqtt from "async-mqtt"
 import pkg from "pg"
-import {readFileSync, existsSync, writeFile} from "fs"
+import {readFileSync, existsSync} from "fs"
+import {writeFile} from "fs/promises"
 const {Client} = pkg
 
 function initMqtt() {
