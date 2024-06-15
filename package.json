@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Fetches data from heat punp sensor and publishes to MQTT",
   "main": "main.js",
-  "scripts": {},
+  "scripts": {
+    "start": "node --env-file=.env main.mjs"
+  },
   "author": "David Williams",
   "license": "ISC",
   "dependencies": {
