@@ -49,13 +49,12 @@ async function getAccessToken() {
         })
         const responseJson = await response.json()
         if (response.status === 200) {
-            await writeFile('token.json', JSON.stringify(response))
+            await writeFile('token.json', JSON.stringify(responseJson))
         } else {
             console.error(`${response.status}: ${responseJson.error} ${responseJson.error_description}`)
             throw new Error()
         }
 
-        // update token.json
         return response.access_token
     } else {
         return tokenResponse.access_token
