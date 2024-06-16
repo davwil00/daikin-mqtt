@@ -2,3 +2,4 @@
 /.fleet
 .env
 token.json
+httpRequests/http-client.env.json

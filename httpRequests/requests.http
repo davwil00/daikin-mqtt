@@ -1,0 +1,11 @@
+## Get with OAUTH
+GET https://api.onecta.daikineurope.com/v1/gateway-devices
+Authorization: Bearer {{$auth.token("daikin")}}
+
+###
+## Get code
+GET https://idp.onecta.daikineurope.com/v1/oidc/authorize?response_type=code&client_id={{clientid}}&redirect_uri={{redirectUrl}}&scope={{scope}}
+
+###
+## Get Token
+GET https://idp.onecta.daikineurope.com/v1/oidc/token?grant_type=authorization_code&client_id={{clientId}}&client_secret={{clientSecret}}&code={{code}}&redirect_uri={{redirectUrl}}
