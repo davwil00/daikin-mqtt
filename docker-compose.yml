@@ -1,0 +1,27 @@
+version: '3.6'
+
+services:
+ mqtt:
+  image: eclipse-mosquitto
+  ports:
+   - "1883:1883"
+  expose:
+   - 1883
+  network_mode: bridge
+  volumes:
+   - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+   - ./mosquitto/passwd:/mosquitto/config/passwd
+
+ postgres:
+   image: postgres:16-alpine
+   ports:
+    - "5432:5432"
+   expose:
+    - 5432
+   network_mode: bridge
+   environment:
+    POSTGRES_USER: pi
+    POSTGRES_PASSWORD: password
+    POSTGRES_DB: mqtt
+   volumes:
+    - ./sql/V1_init_tables.sql:/docker-entrypoint-initdb.d/V1_init_tables.sql
