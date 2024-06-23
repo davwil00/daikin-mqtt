@@ -19,7 +19,7 @@ async function connectToDb() {
 }
 
 async function saveToDb(dbClient, outsideTemp, tankTemp) {
-    const query = 'INSERT INTO heat_pump(sensor_id, timestamp, temp) VALUES($1, now(), $2)'
+    const query = "INSERT INTO heat_pump(sensor_id, timestamp, temp) VALUES($1, now() at time zone 'utc', $2)"
     const outsideTempValues = ['outsideTemp', outsideTemp]
     const tankTempValues = ['tankTemp', tankTemp]
 
