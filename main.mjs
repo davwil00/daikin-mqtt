@@ -19,9 +19,9 @@ async function connectToDb() {
 }
 
 async function saveToDb(dbClient, outsideTemp, tankTemp) {
-    const query = 'INSERT INTO heat_pump(sensor_id, timestamp, temp) VALUES($1, $2, $3)'
-    const outsideTempValues = ['outsideTemp', new Date(), outsideTemp]
-    const tankTempValues = ['tankTemp', new Date(), tankTemp]
+    const query = 'INSERT INTO heat_pump(sensor_id, timestamp, temp) VALUES($1, now(), $2)'
+    const outsideTempValues = ['outsideTemp', outsideTemp]
+    const tankTempValues = ['tankTemp', tankTemp]
 
     try {
         await dbClient.query(query, outsideTempValues)
