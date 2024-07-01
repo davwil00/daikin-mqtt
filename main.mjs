@@ -52,7 +52,7 @@ async function getAccessToken() {
             await writeFile('token.json', JSON.stringify(responseJson))
         } else {
             console.error(`${response.status}: ${responseJson.error} ${responseJson.error_description}`)
-            throw new Error()
+            process.exit(1)
         }
 
         return response.access_token
@@ -64,12 +64,19 @@ async function getAccessToken() {
 async function getData(mqtt, dbClient) {
     console.log('Fetching data')
     const token = await getAccessToken()
-    const devices = await fetch('https://api.onecta.daikineurope.com/v1/gateway-devices',
+    const response = await fetch('https://api.onecta.daikineurope.com/v1/gateway-devices',
         {
             headers: {
                 Authorization: `bearer ${token}`
             }
-        }).then(response => response.json())
+        })
+    if (response.status !== 200) {
+        console.error(`${response.status}: ${response.statusText}`)
+        const responseBody = await response.text()
+        console.error("Response body:", responseBody)
+        process.exit(1)
+    }
+    const devices = await response.json()
 
     if (devices) {
         const dhwTank = devices[0].managementPoints.find(managementPoint => managementPoint.embeddedId === 'domesticHotWaterTank')
