@@ -24,13 +24,7 @@ Run the script `sql/V1_init_tables.sql` to create the table to store the data.
 ## Onecta Cloud API
 You need a Daikin developer account and an app created in order to use this.
 
-Initial auth flow not yet supported, for new usages you'll need to get hold of a code by visiting this url (after replacing the placeholders with the details from your app)
-https://idp.onecta.daikineurope.com/v1/oidc/authorize?response_type=code&client_id={{clientId}}&redirect_uri={{redirectUri}}&scope=openid%20onecta:basic.integration
-
-Once you have the code, get a token from
-GET https://idp.onecta.daikineurope.com/v1/oidc/token?grant_type=authorization_code&client_id={{clientId}}&client_secret={{clientSecret}}&code={{code}}&redirect_uri={{redirectUrl}}
-
-Save the response to `token.json`
+If your token has gone bad, run the script and follow the instructions.
 
 For more info, see the docs
 https://developer.cloud.daikineurope.com/docs
