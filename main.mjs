@@ -2,6 +2,8 @@ import mqtt from "async-mqtt"
 import pkg from "pg"
 import {readFileSync, existsSync} from "fs"
 import {writeFile} from "fs/promises"
+import * as readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
 
 const {Client} = pkg
 
@@ -31,6 +33,24 @@ async function saveToDb(dbClient, outsideTemp, tankTemp) {
     }
 }
 
+async function getNewToken() {
+    const rl = readline.createInterface({ input, output });
+    const code = await rl.question('Enter the code ');
+    const url = `https://idp.onecta.daikineurope.com/v1/oidc/token?grant_type=authorization_code&client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${code}&redirect_uri=${process.env.REDIRECT_URL}`
+    console.info(`Getting token from: ${url}`);
+    const tokenResponse = await fetch(url, {
+        method: 'post'
+    })
+    if (tokenResponse.status === 200) {
+        const body = await tokenResponse.json()
+        await writeFile('token.json', JSON.stringify(body))
+    } else {
+        console.error(`Error getting token: ${tokenResponse.status}`)
+        process.exit(1)
+    }
+    rl.close();
+}
+
 function parseJwt(token) {
     return JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString())
 }
@@ -38,6 +58,7 @@ function parseJwt(token) {
 async function getAccessToken() {
     if (!existsSync('token.json')) {
         console.error(`No token found, please log in to get a token and try again: https://idp.onecta.daikineurope.com/v1/oidc/authorize?response_type=code&client_id=${process.env.CLIENT_ID}&redirect_uri=${process.env.REDIRECT_URL}&scope=openid%20onecta:basic.integration`)
+        await getNewToken()
     }
     const tokenResponse = JSON.parse(readFileSync('token.json', {encoding: 'utf8'}))
     const tokenData = parseJwt(tokenResponse.access_token)
